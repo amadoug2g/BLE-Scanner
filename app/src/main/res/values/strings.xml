@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">BLE Scanner</string>
+    <string name="bluetooth_not_supported">Standard Bluetooth not supported</string>
+    <string name="ble_not_supported">BLE not supported</string>
+</resources>
