@@ -6,7 +6,7 @@ A mobile application used to scan, list and rank bluetooth devices ordered by co
 
 ## Features
 * Search and list nearby bluetooth devices
-* Order devices their level of connectivity
+* Order devices using their level of connectivity
 
 ## Installation & Setup
 ### 1. Pre-requisites
@@ -17,6 +17,6 @@ git clone https://github.com/amadoug2g/BLE-Scanner
 ```
 
 ## What's next
-- [ ] Display ordered bluetooth devices
+- [x] Display ordered bluetooth devices
 - [ ] Connect to nearby devices
 - [ ] Advertise mobile device to others

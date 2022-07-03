@@ -33,6 +33,7 @@
                     android:textStyle="bold" />
 
                 <TextView
+                    android:visibility="invisible"
                     android:id="@+id/device_address"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
