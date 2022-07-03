@@ -134,7 +134,8 @@ class MainActivity : AppCompatActivity() {
                 checkPermissions()
             }
             recyclerClear.setOnClickListener {
-                //scanResultAdapter.setData(mutableListOf())
+                scanResultAdapter.setData(mutableListOf())
+                if (isScanning) stopScan() else startScan()
             }
         }
     }
