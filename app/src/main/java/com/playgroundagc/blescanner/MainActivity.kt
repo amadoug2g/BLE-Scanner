@@ -19,8 +19,12 @@ import android.util.Log
 import android.widget.Toast
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.content.ContextCompat
 import androidx.databinding.DataBindingUtil
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import androidx.recyclerview.widget.SimpleItemAnimator
 import com.playgroundagc.blescanner.databinding.ActivityMainBinding
 
 class MainActivity : AppCompatActivity() {
@@ -84,23 +88,43 @@ class MainActivity : AppCompatActivity() {
                     Manifest.permission.BLUETOOTH
                 ) == PackageManager.PERMISSION_GRANTED
             ) {
-                with(result.device) {
-                    Log.d(
-                        "TAG device",
-                        "Found BLE device! Name: ${name ?: "Unnamed"}, address: $address"
-                    )
+                val indexQuery =
+                    scanResults.indexOfFirst { it.device.address == result.device.address }
+                if (indexQuery != -1) {
+                    scanResults[indexQuery] = result
+                    scanResultAdapter.notifyItemChanged(indexQuery)
+                } else {
+                    with(result.device) {
+                        Log.i(
+                            "ScanCallback",
+                            "Found BLE device! Name: ${name ?: "Unnamed"}, address: $address"
+                        )
+                    }
+                    scanResults.add(result)
+                    scanResultAdapter.notifyItemInserted(scanResults.size - 1)
                 }
             }
         }
+
+        override fun onScanFailed(errorCode: Int) {
+            super.onScanFailed(errorCode)
+            Log.e("ScanCallback", "onScanFailed: code $errorCode")
+        }
     }
+
+    private val scanResults = mutableListOf<ScanResult>()
+    private lateinit var scanResultAdapter: ScanResultAdapter
     //endregion
 
     //region Override Methods
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
         binding = DataBindingUtil.setContentView(this, R.layout.activity_main)
 
         checkActivation()
+
+        setUpAdapter()
 
         binding.apply {
             lifecycleOwner = this@MainActivity
@@ -217,6 +241,30 @@ class MainActivity : AppCompatActivity() {
     }
     //endregion
 
+    //region RecyclerView
+    private fun setUpAdapter() {
+        scanResultAdapter = ScanResultAdapter(scanResults)
+        setupRecyclerView()
+    }
+
+    private fun setupRecyclerView() {
+        binding.scanRecycler.apply {
+            adapter = scanResultAdapter
+            layoutManager = LinearLayoutManager(
+                this@MainActivity,
+                RecyclerView.VERTICAL,
+                false
+            )
+            isNestedScrollingEnabled = false
+        }
+
+        val animator = binding.scanRecycler.itemAnimator
+        if (animator is SimpleItemAnimator) {
+            animator.supportsChangeAnimations = false
+        }
+    }
+    //endregion
+
     //region BLE Actions
     private fun startScan() {
         if (isScanning) {
@@ -227,12 +275,16 @@ class MainActivity : AppCompatActivity() {
                     Manifest.permission.BLUETOOTH
                 ) == PackageManager.PERMISSION_GRANTED
             ) {
+                scanResults.clear()
+                scanResultAdapter.notifyDataSetChanged()
                 bleScanner.startScan(null, scanSettings, scanCallback)
+                isScanning = true
             }
         }
     }
 
     private fun stopScan() {
+        Log.d("TAG", "scanResults: $scanResults")
         if (ContextCompat.checkSelfPermission(
                 this,
                 Manifest.permission.BLUETOOTH
