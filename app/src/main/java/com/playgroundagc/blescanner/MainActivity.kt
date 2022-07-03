@@ -37,7 +37,7 @@ class MainActivity : AppCompatActivity() {
         bluetoothManager.adapter
     }
 
-    var locationIntent: Intent? = null
+    private var locationIntent: Intent? = null
 
     private val isLocationPermissionGranted
         get() = hasPermission(Manifest.permission.ACCESS_FINE_LOCATION)
@@ -54,14 +54,14 @@ class MainActivity : AppCompatActivity() {
     private var isScanning = false
         set(value) {
             field = value
-            runOnUiThread { binding.bleScanner.text = if (value) "Stop scan" else "Start scan" }
+            runOnUiThread { binding.bleScanner.text = if (value) resources.getString(R.string.stop_scan) else resources.getString(R.string.start_scan) }
         }
 
     private val startForResult =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
             if (result.resultCode == Activity.RESULT_OK) {
                 val intent = result.data
-                // TODO: Handle the Intent
+                Log.d("TAG", "Intent: $intent")
             }
         }
 
@@ -101,6 +101,7 @@ class MainActivity : AppCompatActivity() {
                         )
                     }
                     scanResults.add(result)
+                    scanResults.sortByDescending { it.rssi }
                     scanResultAdapter.notifyItemInserted(scanResults.size - 1)
                 }
             }
@@ -131,6 +132,9 @@ class MainActivity : AppCompatActivity() {
             executePendingBindings()
             bleScanner.setOnClickListener {
                 checkPermissions()
+            }
+            recyclerClear.setOnClickListener {
+                //scanResultAdapter.setData(mutableListOf())
             }
         }
     }
@@ -276,7 +280,7 @@ class MainActivity : AppCompatActivity() {
                 ) == PackageManager.PERMISSION_GRANTED
             ) {
                 scanResults.clear()
-                scanResultAdapter.notifyDataSetChanged()
+                scanResultAdapter.setData(scanResults)
                 bleScanner.startScan(null, scanSettings, scanCallback)
                 isScanning = true
             }
