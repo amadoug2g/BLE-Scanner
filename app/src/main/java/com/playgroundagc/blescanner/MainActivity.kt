@@ -21,6 +21,7 @@ import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.content.ContextCompat
+import androidx.core.util.Predicate
 import androidx.databinding.DataBindingUtil
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -94,15 +95,10 @@ class MainActivity : AppCompatActivity() {
                     scanResults[indexQuery] = result
                     scanResultAdapter.notifyItemChanged(indexQuery)
                 } else {
-                    with(result.device) {
-                        Log.i(
-                            "ScanCallback",
-                            "Found BLE device! Name: ${name ?: "Unnamed"}, address: $address"
-                        )
-                    }
                     scanResults.add(result)
                     scanResults.sortByDescending { it.rssi }
-                    scanResultAdapter.notifyItemInserted(scanResults.size - 1)
+                    val predicate = Predicate { x: ScanResult -> x.device.name == null }
+                    removeItems(scanResults, predicate)
                 }
             }
         }
@@ -134,8 +130,8 @@ class MainActivity : AppCompatActivity() {
                 checkPermissions()
             }
             recyclerClear.setOnClickListener {
+                if (isScanning) stopScan()
                 scanResultAdapter.setData(mutableListOf())
-                if (isScanning) stopScan() else startScan()
             }
         }
     }
@@ -318,6 +314,12 @@ class MainActivity : AppCompatActivity() {
 
     private fun BluetoothAdapter.isBluetoothEnabled(): Boolean {
         return this.isEnabled
+    }
+
+    private fun <T> removeItems(list: MutableList<T>, predicate: Predicate<T>) {
+        val newList: MutableList<T> = ArrayList()
+        list.filter { predicate.test(it) }.forEach { newList.add(it) }
+        list.removeAll(newList)
     }
     //endregion
 }
